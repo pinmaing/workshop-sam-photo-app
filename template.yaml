@@ -1,0 +1,155 @@
+# More info about AWS SAM : https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  workshop-sam-app
+
+  Sample SAM Template for workshop-sam-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+# More info about Sub,Gett,Ref : https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference.html
+Globals:
+  Function:
+    Timeout: 300
+    Environment:
+      Variables:
+        # Environment Variable for all Lambda Function
+        S3_BUCKET: !Sub ${WorkshopS3BucketName}
+        AUTH_KEY: !Sub ${WorkshopAuthorizationKey}
+        S3_REGION: !Sub ${AWS::Region}
+  # Api: # https://github.com/aws/serverless-application-model/blob/master/docs/globals.rst#implicit-apis
+  #   Name: !Sub ${WorkshopApiName}
+  #   Cors: # More info about Cors: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#cors-configuration
+  #     AllowOrigin: "'*'"
+  #     AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+  #     AllowMethods: "'GET,HEAD,OPTIONS,POST,PATCH,PUT,DELETE'"
+Parameters:
+  WorkshopApiName:
+    Type: String
+    Default: "workshop-photo-yourname"
+    Description: API Name
+  WorkshopApiStageName:
+    Type: String
+    Default: "prod"
+    Description: API Stage Name
+  WorkshopRole:
+    Type: String
+    Description: IAM Role Lambda execution
+  WorkshopAuthorizationKey:
+    Type: String
+    Default: "authtest"
+    Description: IAM Role Lambda execution
+  WorkshopS3BucketName:
+    Type: String
+    Default: "workshop-bucket-yourname"
+    Description: S3 Bucket Name for photo process (Please give name as "workshop-[your name]" , eg, workshop-pms)
+  WorkshopS3SignedUrlExpiration:
+    Type: Number
+    Default: 3600
+    Description: S3 Signed URL expiration in second
+
+Resources:
+  WorkshopApiGatewayApi: # More info for Endpoint type of API Gateway API : https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html
+    Type: AWS::Serverless::Api # More info about Resource Api: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-api.html
+    Properties:
+      Name: !Sub ${WorkshopApiName}
+      StageName: !Sub ${WorkshopApiStageName}
+      BinaryMediaTypes: 
+        - "*~1*"
+      Cors: # More info about Cors: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#cors-configuration
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowMethods: "'GET,HEAD,OPTIONS,POST,PATCH,PUT,DELETE'"
+  PhotoProcessUploadPhotoFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: photo_process/upload_photo/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Role: !Sub ${WorkshopRole}
+      Events:
+        GenerateUploadUrl:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /upload_photo
+            Method: post
+            RestApiId: !Ref WorkshopApiGatewayApi
+            
+  PhotoProcessGetPhotoUrlPostFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: photo_process/get_photo_url/
+      Handler: app.lambda_handler_post
+      Runtime: python3.8
+      Role: !Sub ${WorkshopRole}
+      Environment:
+        Variables:
+          # Enviornment Variable for current Lambda
+          SIGNED_URL_EXPIRATION: !Sub ${WorkshopS3SignedUrlExpiration}
+      Events:
+        GetPhotoUrl:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            # Path: /get_photo_url/{photo_path}
+            Path: /get_photo_url
+            Method: post
+            RestApiId: !Ref WorkshopApiGatewayApi
+  PhotoProcessGetPhotoUrlGetFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: photo_process/get_photo_url/
+      Handler: app.lambda_handler_get
+      Runtime: python3.8
+      Role: !Sub ${WorkshopRole}
+      Environment:
+        Variables:
+          # Enviornment Variable for current Lambda
+          SIGNED_URL_EXPIRATION: !Sub ${WorkshopS3SignedUrlExpiration}
+      Events:
+        GetPhotoUrl:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /get_photo_url
+            Method: get
+            RestApiId: !Ref WorkshopApiGatewayApi
+
+  PhotoProcessBucket:
+    Type: AWS::S3::Bucket # More info about API Event Source: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-s3-bucket.html
+    Properties:
+      BucketName: !Sub ${WorkshopS3BucketName}
+      CorsConfiguration: # More info about API Event Source: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket-corsconfiguration.html
+        CorsRules:
+          -
+            AllowedOrigins:
+              - '*'
+            AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  PhotoProcessUploadPhotoUrlApi:
+    Description: "API Gateway endpoint URL for Prod stage for Photo Process function"
+    Value: !Sub "https://${WorkshopApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${WorkshopApiStageName}/upload_photo"
+  PhotoProcessGetPhotoUrlPostGetApi:
+    Description: "API Gateway endpoint URL for Prod stage for Photo Process function"
+    Value: !Sub "https://${WorkshopApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${WorkshopApiStageName}/get_photo_url"
+  PhotoProcessUploadPhotoFunction:
+    Description: "Upload Photo Lambda Function ARN"
+    Value: !GetAtt PhotoProcessUploadPhotoFunction.Arn
+  PhotoProcessGetPhotoUrlPostFunction:
+    Description: "Get Photo Url Lambda Function ARN"
+    Value: !GetAtt PhotoProcessGetPhotoUrlPostFunction.Arn
+  PhotoProcessGetPhotoUrlGetFunction:
+    Description: "Get Photo Url Lambda Function ARN"
+    Value: !GetAtt PhotoProcessGetPhotoUrlGetFunction.Arn
+  PhotoProcessBucket:
+    Value: !Ref PhotoProcessBucket
+    Description: Name of the sample Amazon S3 bucket with CORS enabled.
