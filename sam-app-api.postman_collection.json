@@ -1,0 +1,184 @@
+{
+	"info": {
+		"_postman_id": "7b675c4f-bb85-4f26-b5b5-70d854710b7c",
+		"name": "sam-app-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "UploadPhotoRequest",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "authtest",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "image/png",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "/C:/WAI_Event/sample_workshop/workshop-sam-photo-app/photo/dog.png"
+					},
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{apigatewayapi}}.execute-api.{{region}}.amazonaws.com/{{stagename}}/upload_photo?photo_name=dog.png",
+					"protocol": "https",
+					"host": [
+						"{{apigatewayapi}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stagename}}",
+						"upload_photo"
+					],
+					"query": [
+						{
+							"key": "photo_name",
+							"value": "dog.png"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetPhotoUrlPostRequest",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "authtest",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"photo_path\": \"2021/12/17/dog.png\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{apigatewayapi}}.execute-api.{{region}}.amazonaws.com/{{stagename}}/get_photo_url",
+					"protocol": "https",
+					"host": [
+						"{{apigatewayapi}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stagename}}",
+						"get_photo_url"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetPhotoUrlGetRequest",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "authtest",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://{{apigatewayapi}}.execute-api.{{region}}.amazonaws.com/{{stagename}}/get_photo_url?photo_path=2021/12/17/dog.png",
+					"protocol": "https",
+					"host": [
+						"{{apigatewayapi}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stagename}}",
+						"get_photo_url"
+					],
+					"query": [
+						{
+							"key": "photo_path",
+							"value": "2021/12/17/dog.png"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ViewImageByS3SigedUrlRequest",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "apigatewayapi",
+			"value": "a9yd5y5n4f"
+		},
+		{
+			"key": "region",
+			"value": "ap-northeast-1"
+		},
+		{
+			"key": "stagename",
+			"value": "prod"
+		}
+	]
+}
